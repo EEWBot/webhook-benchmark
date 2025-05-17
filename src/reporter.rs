@@ -13,6 +13,10 @@ async fn report(client: &reqwest::Client, report_in: &url::Url, gauge: &Gauge) -
             "color": 0x008000,
             "fields": [
                 {
+                    "name": "Count",
+                    "value": format!("{} times", gauge.count()),
+                },
+                {
                     "name": "Best",
                     "value": format!("{}ms", gauge.best_ms()),
                     "inline": true,
