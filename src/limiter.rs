@@ -19,10 +19,6 @@ pub struct Limiter {
 }
 
 impl Limiter {
-    pub fn notfounds(&self) -> Vec<url::Url> {
-        self.notfound_set.pin().iter().cloned().collect()
-    }
-
     pub fn current(&self, request: &Request) -> Status {
         if request.retry_count > request.context.retry_limit {
             return Status::RetryLimitReached;
@@ -43,14 +39,6 @@ impl Limiter {
 
     pub fn tell_notfound(&self, target: &url::Url) {
         self.notfound_set.pin().insert(target.to_owned());
-    }
-
-    pub fn clear_notfounds<S: std::borrow::Borrow<url::Url>>(&self, targets: &[S]) {
-        let set = self.notfound_set.pin();
-
-        for target in targets {
-            set.remove(target.borrow());
-        }
     }
 
     pub fn tell_ratelimit(&self, target: &url::Url, retry_after: f32) -> Duration {

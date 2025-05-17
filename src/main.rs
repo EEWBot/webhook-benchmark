@@ -12,7 +12,6 @@ mod discord;
 mod limiter;
 mod load_generator;
 mod metrics;
-mod namesgenerator;
 mod reporter;
 mod request;
 
