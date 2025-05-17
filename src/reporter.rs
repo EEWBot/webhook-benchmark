@@ -54,7 +54,7 @@ pub async fn run(report_interval: &Duration, report_in: &url::Url, metrics: Metr
         .build()
         .unwrap();
 
-    tokio::time::sleep(Duration::from_secs(600)).await;
+    tokio::time::sleep(Duration::from_secs(60)).await;
 
     let mut interval = tokio::time::interval(*report_interval);
 
