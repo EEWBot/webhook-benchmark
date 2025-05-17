@@ -46,12 +46,12 @@ pub async fn run(targets: Targets, sender: JobSender, interval: &Duration, messa
     );
 
     let context = Arc::new(Context {
-        identity: format!("benchmark#benchmark"),
         body,
         retry_limit: 0,
     });
 
     loop {
+        tracing::info!("Iteration Start!");
         for target in &targets.targets {
             let _ = interval.tick().await;
 

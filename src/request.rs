@@ -8,7 +8,6 @@ pub type JobReceiver = async_channel::Receiver<Job>;
 pub struct Context {
     pub retry_limit: usize,
     pub body: bytes::Bytes,
-    pub identity: String,
 }
 
 #[derive(Clone, Debug)]
@@ -23,23 +22,5 @@ impl Request {
     pub fn into_retry(mut self) -> Self {
         self.retry_count += 1;
         self
-    }
-}
-
-impl Drop for Context {
-    fn drop(&mut self) {
-        tracing::info!("{} Sent!", self.identity);
-    }
-}
-
-impl Drop for Request {
-    fn drop(&mut self) {
-        let count = Arc::strong_count(&self.context);
-        match count {
-            1000 | 100 | 10 => {
-                tracing::info!("{} Last {count: >4}! ", self.context.identity);
-            },
-            _ => {},
-        }
     }
 }
