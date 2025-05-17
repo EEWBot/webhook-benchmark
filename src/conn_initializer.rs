@@ -4,6 +4,7 @@ use anyhow::{Context, Result as AHResult};
 use hickory_resolver::{Resolver, config::ResolverConfig, name_server::TokioConnectionProvider};
 
 use crate::limiter::Limiter;
+use crate::metrics::Metrics;
 use crate::request::JobSender;
 
 async fn query_discord_ips() -> AHResult<Vec<Ipv4Addr>> {
@@ -34,6 +35,7 @@ pub async fn initialize(
     sender_ips: &[Ipv4Addr],
     multiplier: u8,
     rty_multiplier: u8,
+    metrics: Metrics,
 ) -> AHResult<(JobSender, &'static Limiter)> {
     let target_ips = query_discord_ips().await?;
 
@@ -65,9 +67,12 @@ pub async fn initialize(
                 let from = *from;
                 let to = *to;
 
-                tokio::spawn(async move {
-                    let name = &*format!("C{sock_no} {from}-{to}").leak();
-                    crate::conn::sender_loop(name, from, to, rx, tx, limiter).await;
+                tokio::spawn({
+                    let metrics = metrics.clone();
+                    async move {
+                        let name = &*format!("C{sock_no} {from}-{to}").leak();
+                        crate::conn::sender_loop(name, from, to, rx, tx, limiter, metrics).await;
+                    }
                 });
             }
         }
@@ -81,9 +86,12 @@ pub async fn initialize(
                 let from = *from;
                 let to = *to;
 
-                tokio::spawn(async move {
-                    let name = &*format!("R{sock_no} {from}-{to}").leak();
-                    crate::conn::sender_loop(name, from, to, rx, tx, limiter).await;
+                tokio::spawn({
+                    let metrics = metrics.clone();
+                    async move {
+                        let name = &*format!("R{sock_no} {from}-{to}").leak();
+                        crate::conn::sender_loop(name, from, to, rx, tx, limiter, metrics).await;
+                    }
                 });
             }
         }

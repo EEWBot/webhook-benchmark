@@ -27,3 +27,6 @@ url = { version = "2.5.4", features = ["serde"] }
 webpki-roots = "1.0.0"
 
 justnames = { git = "https://github.com/EEWBot/justnames", tag = "v0.1.0" }
+chrono = "0.4.41"
+humantime = "2.2.0"
+reqwest = "0.12.15"

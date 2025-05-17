@@ -19,9 +19,11 @@ use tokio_rustls::{
     client::TlsStream,
     rustls::{RootCertStore, pki_types::ServerName},
 };
+use chrono::{DateTime, Utc};
 
 use crate::discord::Ratelimit;
 use crate::limiter::{Limiter, Status};
+use crate::metrics::Metrics;
 use crate::request::{JobReceiver, JobSender};
 
 const ALPN_H2: &str = "h2";
@@ -80,6 +82,8 @@ async fn response_handling(
     permit: OwnedSemaphorePermit,
     retry_tx: JobSender,
     limiter: &'static Limiter,
+    metrics: Metrics,
+    send_t: DateTime<Utc>,
 ) -> AHResult<()> {
     let mut response = match response.await {
         Ok(v) => v,
@@ -149,6 +153,10 @@ async fn response_handling(
 
     drop(permit);
 
+    let rtt = Utc::now() - send_t;
+    metrics.append(rtt.num_milliseconds()).await;
+
+
     Ok(())
 }
 
@@ -159,6 +167,7 @@ pub async fn sender(
     request_rx: JobReceiver,
     retry_tx: JobSender,
     limiter: &'static Limiter,
+    metrics: Metrics,
 ) -> AHResult<()> {
     let (mut client, mut connection) = setup_connection(from, to)
         .await
@@ -239,6 +248,7 @@ pub async fn sender(
 
                 request_count += 1;
 
+                let send_t = Utc::now();
                 let (response, mut respond) = match client.send_request(h2_header, false) {
                     Ok(v) => v,
                     Err(e) => {
@@ -258,8 +268,11 @@ pub async fn sender(
 
                 let retry_tx = retry_tx.clone();
 
-                tokio::spawn(async move {
-                    response_handling(name, request, response, permit, retry_tx, limiter).await
+                tokio::spawn({
+                    let metrics = metrics.clone();
+                    async move {
+                        response_handling(name, request, response, permit, retry_tx, limiter, metrics, send_t).await
+                    }
                 });
 
                 if last_request {
@@ -284,6 +297,7 @@ pub async fn sender_loop(
     request_rx: JobReceiver,
     retry_tx: JobSender,
     limiter: &'static Limiter,
+    metrics: Metrics,
 ) -> ! {
     loop {
         match sender(
@@ -293,6 +307,7 @@ pub async fn sender_loop(
             request_rx.clone(),
             retry_tx.clone(),
             limiter,
+            metrics.clone(),
         )
         .await
         {

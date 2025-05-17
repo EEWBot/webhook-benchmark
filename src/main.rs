@@ -2,13 +2,17 @@ use std::net::{Ipv4Addr, SocketAddr};
 
 use clap::Parser;
 
+use crate::metrics::Metrics;
+
 mod conn;
 mod conn_initializer;
 mod discord;
 mod limiter;
+mod metrics;
+mod namesgenerator;
+mod reporter;
 mod request;
 mod web;
-mod namesgenerator;
 
 #[derive(Debug, Parser)]
 struct Cli {
@@ -25,6 +29,12 @@ struct Cli {
     rty_multiplier: u8,
 
     #[clap(long, env)]
+    report_in: url::Url,
+
+    #[clap(long, env)]
+    report_interval: humantime::Duration,
+
+    #[clap(long, env)]
     auth_token: String,
 
     #[clap(long, env, default_value = "0.0.0.0:3000")]
@@ -35,6 +45,8 @@ struct Cli {
 async fn main() {
     let cli = Cli::parse();
 
+    let metrics = Metrics::new();
+
     let format = tracing_subscriber::fmt::format()
         .with_target(false)
         .compact();
@@ -44,14 +56,22 @@ async fn main() {
         .with_max_level(tracing::Level::INFO)
         .init();
 
+    tokio::spawn({
+        let metrics = metrics.clone();
+        async move { reporter::run(&cli.report_interval, &cli.report_in, metrics).await }
+    });
+
     let (sender, limiter) = conn_initializer::initialize(
         &cli.retry_ips,
         &cli.sender_ips,
         cli.multiplier,
         cli.rty_multiplier,
+        metrics,
     )
     .await
     .expect("failed to initialize connection");
 
-    web::run(cli.listen, sender, limiter, &cli.auth_token).await.unwrap();
+    web::run(cli.listen, sender, limiter, &cli.auth_token)
+        .await
+        .unwrap();
 }
