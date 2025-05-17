@@ -1,2 +1,2 @@
-# Webhook Sender
- Brand-new Webhook delivery backend for EEWBot.
+# Webhook Benchmark
+ Brand-new Webhook benchmarker for EEWBot.

@@ -4,8 +4,8 @@ LABEL maintainer="yanorei32"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /usr/src
-COPY . /usr/src/webhook-sender/
-WORKDIR /usr/src/webhook-sender
+COPY . /usr/src/webhook-benchmark/
+WORKDIR /usr/src/webhook-benchmark
 RUN cargo build --release && cargo install cargo-license && cargo license \
 	--authors \
 	--do-not-bundle \
@@ -24,12 +24,12 @@ RUN apt-get update; \
 WORKDIR /
 
 COPY --chown=root:root --from=build-env \
-	/usr/src/webhook-sender/CREDITS \
-	/usr/src/webhook-sender/LICENSE \
-	/usr/share/licenses/webhook-sender/
+	/usr/src/webhook-benchmark/CREDITS \
+	/usr/src/webhook-benchmark/LICENSE \
+	/usr/share/licenses/webhook-benchmark/
 
 COPY --chown=root:root --from=build-env \
-	/usr/src/webhook-sender/target/release/webhook-sender \
-	/usr/bin/webhook-sender
+	/usr/src/webhook-benchmark/target/release/webhook-benchmark \
+	/usr/bin/webhook-benchmark
 
-CMD ["/usr/bin/webhook-sender"]
+CMD ["/usr/bin/webhook-benchmark"]

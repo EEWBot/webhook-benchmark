@@ -17,8 +17,8 @@ on:
 env:
   CARGO_INCREMENTAL: 0
   RUST_CACHE_VERSION: v1
-  REGISTRY_IMAGE: ghcr.io/eewbot/webhook-sender
-  PROJ_NAME: webhook-sender
+  REGISTRY_IMAGE: ghcr.io/eewbot/webhook-benchmark
+  PROJ_NAME: webhook-benchmark
 
 jobs:
   release_linux:
@@ -32,19 +32,19 @@ jobs:
             os: linux
             arch: x86_64
             target: x86_64-unknown-linux-gnu
-            output: webhook-sender
+            output: webhook-benchmark
 
           - ghimage: ubuntu-24.04-arm
             os: linux
             arch: aarch64
             target: aarch64-unknown-linux-gnu
-            output: webhook-sender
+            output: webhook-benchmark
 
           - ghimage: ubuntu-24.04
             os: windows
             arch: x86_64
             target: x86_64-pc-windows-gnu
-            output: webhook-sender.exe
+            output: webhook-benchmark.exe
 
     permissions:
       contents: write
